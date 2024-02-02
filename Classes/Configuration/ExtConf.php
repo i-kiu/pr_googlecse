@@ -34,6 +34,11 @@ class ExtConf implements SingletonInterface
     /**
      * @var bool
      */
+    protected $filterByCurrentLang = false;
+
+    /**
+     * @var bool
+     */
     protected $enableCache = true;
 
     /**
@@ -44,7 +49,7 @@ class ExtConf implements SingletonInterface
     /**
      * @var array
      */
-    protected $requiredSettings = ['googleApiKey' => true, 'googleCseKey' => true];
+    protected $requiredSettings = ['googleApiKey' => true, 'googleCseKey' => true, 'filterByCurrentLang' => false];
 
     /**
      * ExtConf constructor.
@@ -98,6 +103,16 @@ class ExtConf implements SingletonInterface
     public function setGoogleCseKey(string $googleCseKey): void
     {
         $this->googleCseKey = $googleCseKey;
+    }
+
+    public function getFilterByCurrentLang(): bool
+    {
+        return $this->filterByCurrentLang;
+    }
+
+    public function setFilterByCurrentLang(bool $filterByCurrentLang): void
+    {
+        $this->filterByCurrentLang = $filterByCurrentLang;
     }
 
     public function isEnableCache(): bool

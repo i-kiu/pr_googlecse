@@ -14,6 +14,7 @@ namespace KronovaNet\PrGooglecse\Service;
 use KronovaNet\PrGooglecse\Configuration\ExtConf;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Context\Context;
 
 /**
  * Class GoogleCseService
@@ -21,9 +22,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 class GoogleCseService
 {
     /**
-     * API URL
+     * @var string
      */
-    private const API_URL = 'https://www.googleapis.com/customsearch/v1?q=%s&cx=%s&key=%s&start=%d';
+    private $url = 'https://www.googleapis.com/customsearch/v1?q=%s&cx=%s&key=%s&start=%d';
 
     /**
      * @var ExtConf
@@ -40,8 +41,11 @@ class GoogleCseService
 
     public function search(string $query, int $start, int $resultsPerPage): array
     {
+        if($this->extConf->getFilterByCurrentLang()){
+            $this->addLanguageParameterToUrl();
+        }
         $requestUrl = sprintf(
-            self::API_URL,
+            $this->getUrl(),
             urlencode($query),
             urlencode($this->extConf->getGoogleCseKey()),
             urlencode($this->extConf->getGoogleApiKey()),
@@ -58,5 +62,29 @@ class GoogleCseService
                 1527430897
             );
         }
+    }
+    private function getUrl(): string
+    {
+        return $this->url;
+    } 
+    private function setUrl(string $url): void
+    {
+        $this->url = $url;
+    }
+    private function getFrontendSelectedLanguage(): string
+    {
+        $context = GeneralUtility::makeInstance(Context::class);
+        /** @var TYPO3\CMS\Core\Site\Entity\Site */
+        $site = $GLOBALS['TYPO3_REQUEST']->getAttribute('site');
+        $langId = $context->getPropertyFromAspect('language', 'id');
+        /** @var TYPO3\CMS\Core\Site\Entity\SiteLanguage */
+        $language = $site->getLanguageById($langId);
+        $langCode = $language->getTwoLetterIsoCode();
+        $currentLanguage = 'lang_'.$langCode;
+        return '&lr='.$currentLanguage;
+    }
+    private function addLanguageParameterToUrl(): void
+    {
+        $this->setUrl($this->url.$this->getFrontendSelectedLanguage());
     }
 }

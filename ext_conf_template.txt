@@ -2,6 +2,8 @@
 googleApiKey =
 # cat=basic; type=string; label = Google Custom Search Enginge Key: Get your own on https://cse.google.com/cse/
 googleCseKey =
+# cat=basic; type=boolean; label = If true the results will be filtered by the current selected language in frontend.
+filterByCurrentLang = 0
 # cat=basic; type=boolean; label=Enable cache for search results
 enableCache = 1
 # cat=basic; type=int; label=Lifetime of search result cache entries (in seconds):Default = 300 (5 minutes)
