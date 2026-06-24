@@ -3,7 +3,7 @@
 	<f:if condition="{queries.previousPage.0}">
 		<li>
 			<f:link.page additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: queries.previousPage.0.startIndex}" noCache="true">
-				<f:translate key="tx_prgooglecse_search.back"/>
+				<f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.back"/>
 			</f:link.page>
 		</li>
 	</f:if>
@@ -19,7 +19,7 @@
 	<f:if condition="{queries.nextPage.0}">
 		<li>
 			<f:link.page additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: queries.nextPage.0.startIndex}" noCache="true">
-				<f:translate key="tx_prgooglecse_search.forward"/>
+				<f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.forward"/>
 			</f:link.page>
 		</li>
 	</f:if>

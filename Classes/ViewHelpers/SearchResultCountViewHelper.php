@@ -11,14 +11,10 @@ declare(strict_types=1);
 
 namespace KronovaNet\PrGooglecse\ViewHelpers;
 
-use TYPO3Fluid\Fluid\Core\Rendering\RenderingContextInterface;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
-use TYPO3Fluid\Fluid\Core\ViewHelper\Traits\CompileWithRenderStatic;
 
 class SearchResultCountViewHelper extends AbstractViewHelper
 {
-    use CompileWithRenderStatic;
-
     public function initializeArguments(): void
     {
         parent::initializeArguments();
@@ -28,19 +24,25 @@ class SearchResultCountViewHelper extends AbstractViewHelper
         $this->registerArgument('startIndex', 'integer', 'The current start index', false, 10);
     }
 
-    public static function renderStatic(
-        array $arguments,
-        \Closure $renderChildrenClosure,
-        RenderingContextInterface $renderingContext
-    ): array {
-        $totalPages = $arguments['totalResults'] / $arguments['resultsPerPage'];
-        $currentPage = round($arguments['startIndex'] / $arguments['resultsPerPage']);
-        $lastPage = $totalPages > $arguments['maxPagesToDisplay'] ? $arguments['maxPagesToDisplay'] : $totalPages;
-        $page = $currentPage > ($totalPages * 0.6) ? round($totalPages * 0.4) : 1;
+    /**
+     * @return array<int, int>
+     */
+    public function render(): array
+    {
+        $totalResults = (int)$this->arguments['totalResults'];
+        $resultsPerPage = (int)$this->arguments['resultsPerPage'];
+        $maxPagesToDisplay = (int)$this->arguments['maxPagesToDisplay'];
+        $startIndex = (int)$this->arguments['startIndex'];
+
+        $totalPages = $totalResults / $resultsPerPage;
+        $currentPage = (int)round($startIndex / $resultsPerPage);
+        $lastPage = $totalPages > $maxPagesToDisplay ? $maxPagesToDisplay : $totalPages;
+        $page = $currentPage > ($totalPages * 0.6) ? (int)round($totalPages * 0.4) : 1;
         $pages = [];
-        for ($page; $page <= $lastPage; $page++) {
-            $pages[$page] = $arguments['resultsPerPage'] * $page;
+        for ($page; $page <= $lastPage; ++$page) {
+            $pages[$page] = $resultsPerPage * $page;
         }
+
         return $pages;
     }
 }

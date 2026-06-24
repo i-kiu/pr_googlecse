@@ -1,5 +1,9 @@
 # cat=pr_googlecse; type=integer; label=Number of results to display per page
-tt_content.list.20.pr_googlecse.resultsPerPage = 10
+tt_content.pr_googlecse.20.resultsPerPage = 10
 
 # cat=pr_googlecse; type=boolean; label=Turning on this feature renders the page numbers e.g. PREVIOUS 1 2 3 4 NEXT:Attention: This feature is unstable, because the CSE API returns inaccurate estimate total results which affects the amount of pages per reload!
+tt_content.pr_googlecse.20.showPagesInPagination = 0
+
+# Legacy list-type constants (pre-v14 migrated records)
+tt_content.list.20.pr_googlecse.resultsPerPage = 10
 tt_content.list.20.pr_googlecse.showPagesInPagination = 0

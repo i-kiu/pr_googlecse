@@ -11,76 +11,71 @@ declare(strict_types=1);
 
 namespace KronovaNet\PrGooglecse\Configuration;
 
+use ReflectionMethod;
+use ReflectionNamedType;
 use KronovaNet\PrGooglecse\Exception\IncompleteConfigurationException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\SingletonInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * GoogleMapsController
- */
-class ExtConf implements SingletonInterface
+class ExtConf
 {
-    /**
-     * @var string
-     */
-    protected $googleApiKey = '';
+    protected string $googleApiKey = '';
+
+    protected string $googleCseKey = '';
+
+    protected bool $filterByCurrentLang = false;
+
+    protected bool $enableCache = true;
+
+    protected int $cacheLifetime = 300;
 
     /**
-     * @var string
+     * @var array<string, bool>
      */
-    protected $googleCseKey = '';
+    protected array $requiredSettings = [
+        'googleApiKey' => true,
+        'googleCseKey' => true,
+        'filterByCurrentLang' => false,
+    ];
 
-    /**
-     * @var bool
-     */
-    protected $filterByCurrentLang = false;
-
-    /**
-     * @var bool
-     */
-    protected $enableCache = true;
-
-    /**
-     * @var int
-     */
-    protected $cacheLifetime = 300;
-
-    /**
-     * @var array
-     */
-    protected $requiredSettings = ['googleApiKey' => true, 'googleCseKey' => true, 'filterByCurrentLang' => false];
-
-    /**
-     * ExtConf constructor.
-     */
-    public function __construct()
-    {
-        // get global configuration
-        $extConf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('pr_googlecse');
-        $missingRequiredSettings = $this->requiredSettings;
-        if (is_array($extConf) && count($extConf)) {
-            // call setter method foreach configuration entry
-            foreach ($extConf as $key => $value) {
-                $methodName = 'set' . ucfirst($key);
-                if (method_exists($this, $methodName)) {
-                    $reflectionMethod = new \ReflectionMethod($this, $methodName);
-                    $type = $reflectionMethod->getParameters()[0]->getType();
-                    if ($type) {
-                        settype($value, $type->getName());
-                    }
-                    $this->$methodName($value);
-                }
-                if (array_key_exists($key, $missingRequiredSettings)) {
-                    unset($missingRequiredSettings[$key]);
-                }
-            }
+    public function __construct(
+        private readonly ExtensionConfiguration $extensionConfiguration,
+    ) {
+        $extConf = $this->extensionConfiguration->get('pr_googlecse');
+        if (!\is_array($extConf) || $extConf === []) {
+            return;
         }
-        if (count($missingRequiredSettings)) {
+
+        foreach ($extConf as $key => $value) {
+            $methodName = 'set' . ucfirst((string)$key);
+            if (!method_exists($this, $methodName)) {
+                continue;
+            }
+
+            $reflectionMethod = new ReflectionMethod($this, $methodName);
+            $type = $reflectionMethod->getParameters()[0]->getType();
+            if ($type instanceof ReflectionNamedType) {
+                settype($value, $type->getName());
+            }
+
+            $this->$methodName($value);
+        }
+    }
+
+    public function assertConfigured(): void
+    {
+        $missing = [];
+        if ($this->googleApiKey === '') {
+            $missing[] = 'googleApiKey';
+        }
+        if ($this->googleCseKey === '') {
+            $missing[] = 'googleCseKey';
+        }
+
+        if ($missing !== []) {
             throw new IncompleteConfigurationException(
                 'The following required settings are missing in your extension configuration: '
-                . implode(', ', array_keys($missingRequiredSettings)),
-                1527962959
+                . implode(', ', $missing),
+                1527962959,
             );
         }
     }
@@ -92,7 +87,7 @@ class ExtConf implements SingletonInterface
 
     public function setGoogleApiKey(string $googleApiKey): void
     {
-        $this->googleApiKey = trim((string)$googleApiKey);
+        $this->googleApiKey = trim($googleApiKey);
     }
 
     public function getGoogleCseKey(): string
@@ -122,7 +117,7 @@ class ExtConf implements SingletonInterface
 
     public function setEnableCache(bool $enableCache): void
     {
-        $this->enableCache = (bool)$enableCache;
+        $this->enableCache = $enableCache;
     }
 
     public function getCacheLifetime(): int

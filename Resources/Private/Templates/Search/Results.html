@@ -1,10 +1,10 @@
 <h2>
-	<f:translate key="tx_prgooglecse_search"/>
+	<f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search"/>
 	{prGoogleCseQuery}
 </h2>
 <f:render partial="Form" arguments="{prGoogleCseQuery: prGoogleCseQuery, pageUid: pageUid, pageType: pageType}"/>
 <p>
-	<f:translate key="tx_prgooglecse_search.totalResults" arguments="{0: response.searchInformation.totalResults}"/>
+	<f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.totalResults" arguments="{0: response.searchInformation.totalResults}"/>
 </p>
 <f:if condition="{response.items}">
 	<f:then>
@@ -17,7 +17,7 @@
 							arguments="{queries: response.queries, prGoogleCseQuery: prGoogleCseQuery, resultsPerPage: resultsPerPage, showPagesInPagination: showPagesInPagination}"/>
 	</f:then>
 	<f:else>
-		<f:translate key="tx_prgooglecse_search.noresults"/>
+		<f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.noresults"/>
 	</f:else>
 </f:if>
 <br/>

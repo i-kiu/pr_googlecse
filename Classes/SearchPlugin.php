@@ -11,115 +11,119 @@ declare(strict_types=1);
 
 namespace KronovaNet\PrGooglecse;
 
+use Exception;
 use KronovaNet\PrGooglecse\Configuration\ExtConf;
 use KronovaNet\PrGooglecse\Service\GoogleCseService;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Log\LoggerInterface;
+use TYPO3\CMS\Core\Attribute\AsAllowedCallable;
 use TYPO3\CMS\Core\Cache\Frontend\FrontendInterface;
-use TYPO3\CMS\Core\Log\Logger;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Fluid\View\StandaloneView;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
+use TYPO3\CMS\Core\View\ViewFactoryData;
+use TYPO3\CMS\Core\View\ViewFactoryInterface;
+use TYPO3\CMS\Core\View\ViewInterface;
 use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
-use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
 
-/**
- * Class SearchPlugin
- */
 class SearchPlugin
 {
-    /**
-     * @var ContentObjectRenderer
-     */
-    public $cObj;
-
-    /**
-     * @var GoogleCseService
-     */
-    protected $googleCseService;
-
-    /**
-     * @var ExtConf
-     */
-    protected $extConf;
-
-    /**
-     * @var FrontendInterface
-     */
-    protected $cache;
-
-    /**
-     * @var StandaloneView
-     */
-    protected $standaloneView;
-
-    /**
-     * @var Logger
-     */
-    protected $logger;
+    public ContentObjectRenderer $cObj;
 
     public function __construct(
-        GoogleCseService $googleCseService,
-        ExtConf $extConf,
-        FrontendInterface $cache
+        private readonly GoogleCseService $googleCseService,
+        private readonly ExtConf $extConf,
+        private readonly FrontendInterface $cache,
+        private readonly LoggerInterface $logger,
+        private readonly ViewFactoryInterface $viewFactory,
     ) {
-        $this->googleCseService = $googleCseService;
-        $this->extConf = $extConf;
-        $this->cache = $cache;
-        $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
     }
 
+    /**
+     * @param array<string, mixed> $conf
+     */
+    #[AsAllowedCallable]
     public function render(string $_, array $conf): string
     {
-        $query = trim(GeneralUtility::_GP('prGoogleCseQuery') ?? '');
-        $start = (int)GeneralUtility::_GP('prGoogleCseStartIndex') ?: 1;
-        $pageUid = (int)$this->getTypoScriptFrontendController()->id;
-        $pageType = (int)GeneralUtility::_GP('type');
-        $resultsPerPage = (int)$conf['resultsPerPage'];
-        $cacheIdentifier = md5(
-            $query . $start . $this->getTypoScriptFrontendController()->getLanguage()->getLocale()
-        );
-        // get cached result / search form if cache is enabled and cache entry is exists
+        $request = $this->cObj->getRequest();
+        $query = trim($this->getRequestParameter($request, 'prGoogleCseQuery'));
+        $start = (int)$this->getRequestParameter($request, 'prGoogleCseStartIndex') ?: 1;
+        $pageUid = (int)$request->getAttribute('frontend.page.information')?->getId();
+        $pageType = (int)$this->getRequestParameter($request, 'type');
+        $resultsPerPage = (int)($conf['resultsPerPage'] ?? 10);
+        $cacheIdentifier = md5($query . $start . $this->resolveLocale($request));
+
         if ($this->extConf->isEnableCache() && $this->cache->has($cacheIdentifier)) {
-            $content = $this->cache->get($cacheIdentifier);
-        } else {
-            $this->initializeStandaloneView();
-            $this->standaloneView->assign('pageUid', $pageUid);
-            $this->standaloneView->assign('pageType', $pageType);
-            if ($query) {
-                try {
-                    // only send request if query is not empty
-                    $response = $this->googleCseService->search($query, $start, $resultsPerPage);
-                    $this->standaloneView->assign('response', $response);
-                    $this->standaloneView->assign('prGoogleCseQuery', $query);
-                    $this->standaloneView->assign('resultsPerPage', $resultsPerPage);
-                    $this->standaloneView->assign('showPagesInPagination', (bool)$conf['showPagesInPagination']);
-                    $this->standaloneView->setTemplate('Results');
-                } catch (\Exception $exception) {
-                    // show template that search is currently not available
-                    $this->extConf->setEnableCache(false);
-                    $this->standaloneView->setTemplate('Error');
-                    $this->logger->error('Exception during search!', ['exception' => $exception]);
-                }
-            } else {
-                // otherwise render the form template
-                $this->standaloneView->setTemplate('Form');
-            }
-            $content = $this->standaloneView->render();
-            if ($this->extConf->isEnableCache()) {
-                $this->cache->set($cacheIdentifier, $content, [], $this->extConf->getCacheLifetime());
-            }
+            return (string)$this->cache->get($cacheIdentifier);
         }
+
+        $view = $this->createView($request);
+        $view->assignMultiple([
+            'pageUid' => $pageUid,
+            'pageType' => $pageType,
+        ]);
+
+        if ($query !== '') {
+            try {
+                $response = $this->googleCseService->search($query, $start, $resultsPerPage, $request);
+                $view->assignMultiple([
+                    'response' => $response,
+                    'prGoogleCseQuery' => $query,
+                    'resultsPerPage' => $resultsPerPage,
+                    'showPagesInPagination' => (bool)($conf['showPagesInPagination'] ?? false),
+                ]);
+                $content = $view->render('Search/Results');
+            } catch (Exception $exception) {
+                $this->extConf->setEnableCache(false);
+                $this->logger->error('Exception during search!', ['exception' => $exception]);
+                $content = $view->render('Search/Error');
+            }
+        } else {
+            $content = $view->render('Search/Form');
+        }
+
+        if ($this->extConf->isEnableCache()) {
+            $this->cache->set($cacheIdentifier, $content, [], $this->extConf->getCacheLifetime());
+        }
+
         return $content;
     }
 
-    protected function initializeStandaloneView(): void
+    private function createView(ServerRequestInterface $request): ViewInterface
     {
-        $this->standaloneView = GeneralUtility::makeInstance(StandaloneView::class, $this->cObj);
-        $this->standaloneView->getTemplatePaths()->fillDefaultsByPackageName('pr_googlecse');
-        $this->standaloneView->getRenderingContext()->setControllerName('Search');
-        $this->standaloneView->getRequest()->setControllerExtensionName('pr_googlecse');
+        return $this->viewFactory->create(new ViewFactoryData(
+            templateRootPaths: ['EXT:pr_googlecse/Resources/Private/Templates'],
+            partialRootPaths: ['EXT:pr_googlecse/Resources/Private/Partials'],
+            layoutRootPaths: ['EXT:pr_googlecse/Resources/Private/Layouts'],
+            request: $request,
+        ));
     }
 
-    protected function getTypoScriptFrontendController(): TypoScriptFrontendController
+    private function getRequestParameter(ServerRequestInterface $request, string $name): string
     {
-        return $GLOBALS['TSFE'];
+        $parsedBody = $request->getParsedBody();
+        if (\is_array($parsedBody) && isset($parsedBody[$name])) {
+            return (string)$parsedBody[$name];
+        }
+
+        return (string)($request->getQueryParams()[$name] ?? '');
+    }
+
+    private function resolveLocale(ServerRequestInterface $request): string
+    {
+        $language = $request->getAttribute('language');
+        if ($language instanceof SiteLanguage) {
+            return (string)$language->getLocale();
+        }
+
+        $site = $request->getAttribute('site');
+        if ($site !== null) {
+            return (string)$site->getDefaultLanguage()->getLocale();
+        }
+
+        return '';
+    }
+
+    public function setContentObjectRenderer(ContentObjectRenderer $cObj): void
+    {
+        $this->cObj = $cObj;
     }
 }

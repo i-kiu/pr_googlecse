@@ -1,9 +1,11 @@
 <form method="get">
-    <f:if condition="{pageType}">
+    <f:if condition="{pageUid}">
         <input type="hidden" name="id" value="{pageUid}" />
+    </f:if>
+    <f:if condition="{pageType}">
         <input type="hidden" name="type" value="{pageType}" />
     </f:if>
-    <label for="prGoogleCseQuery"><f:translate key="tx_prgooglecse_search.query"/></label>
+    <label for="prGoogleCseQuery"><f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.query" /></label>
     <input type="text" class="form-input" id="prGoogleCseQuery" name="prGoogleCseQuery" value="{prGoogleCseQuery}" />
-    <input type="submit" class="button" id="prGooglCseSubmit" value="{f:translate(key:'tx_prgooglecse_search.submit')}" />
+    <input type="submit" class="button" id="prGooglCseSubmit" value="{f:translate(id: 'LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.submit')}" />
 </form>
