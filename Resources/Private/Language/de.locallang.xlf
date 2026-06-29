@@ -31,6 +31,10 @@
                 <source>Next</source>
                 <target>Weiter</target>
             </trans-unit>
+            <trans-unit id="tx_prgooglecse_search.pagination">
+                <source>Search results pagination</source>
+                <target>Seitennavigation der Suchergebnisse</target>
+            </trans-unit>
             <trans-unit id="tx_prgooglecse_copyright">
                 <source>Powered by Google custom search engine and TYPO3 extension pr_googlecse.</source>
                 <target>Powered by Google custom search engine und TYPO3 Erweiterung pr_googlecse.</target>

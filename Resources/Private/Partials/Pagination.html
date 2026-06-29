@@ -1,26 +1,30 @@
 {namespace p=KronovaNet\PrGooglecse\ViewHelpers}
 <div class="tx_prgooglecse-pagination">
-	<f:if condition="{queries.previousPage.0}">
-		<li>
-			<f:link.page additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: queries.previousPage.0.startIndex}" noCache="true">
-				<f:translate key="tx_prgooglecse_search.back"/>
-			</f:link.page>
-		</li>
-	</f:if>
-	<f:if condition="{showPagesInPagination}">
-		<f:for each="{p:searchResultCount(totalResults: queries.request.0.totalResults, resultsPerPage: resultsPerPage, startIndex: queries.request.0.startIndex)}" key="page" as="startIndex">
-			<li>
-				<f:link.page class="{f:if(condition: '{queries.request.0.startIndex} === {startIndex}', then: 'active')}" additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: startIndex}" noCache="true">
-					{page}
-				</f:link.page>
-			</li>
-		</f:for>
-	</f:if>
-	<f:if condition="{queries.nextPage.0}">
-		<li>
-			<f:link.page additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: queries.nextPage.0.startIndex}" noCache="true">
-				<f:translate key="tx_prgooglecse_search.forward"/>
-			</f:link.page>
-		</li>
-	</f:if>
+	<nav aria-label="{f:translate(id: 'LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.pagination')}">
+		<ul>
+			<f:if condition="{queries.previousPage.0}">
+				<li>
+					<f:link.page additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: queries.previousPage.0.startIndex}" noCache="true">
+						<f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.back"/>
+					</f:link.page>
+				</li>
+			</f:if>
+			<f:if condition="{showPagesInPagination}">
+				<f:for each="{p:searchResultCount(totalResults: queries.request.0.totalResults, resultsPerPage: resultsPerPage, startIndex: queries.request.0.startIndex)}" key="page" as="startIndex">
+					<li>
+						<f:link.page class="{f:if(condition: '{queries.request.0.startIndex} === {startIndex}', then: 'active')}" additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: startIndex}" noCache="true">
+							{page}
+						</f:link.page>
+					</li>
+				</f:for>
+			</f:if>
+			<f:if condition="{queries.nextPage.0}">
+				<li>
+					<f:link.page additionalParams="{prGoogleCseQuery: prGoogleCseQuery, prGoogleCseStartIndex: queries.nextPage.0.startIndex}" noCache="true">
+						<f:translate id="LLL:EXT:pr_googlecse/Resources/Private/Language/locallang.xlf:tx_prgooglecse_search.forward"/>
+					</f:link.page>
+				</li>
+			</f:if>
+		</ul>
+	</nav>
 </div>

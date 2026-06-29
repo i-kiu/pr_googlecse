@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of the package kronova/pr-googlecse.
  *
@@ -9,9 +11,11 @@
 
 namespace KronovaNet\PrGooglecse\Exception;
 
+use Exception;
+
 /**
- * Class IncompleteConfigurationException
+ * Class IncompleteConfigurationException.
  */
-class IncompleteConfigurationException extends \Exception
+class IncompleteConfigurationException extends Exception
 {
 }

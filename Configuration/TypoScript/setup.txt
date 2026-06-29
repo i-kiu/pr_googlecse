@@ -1,3 +1,11 @@
+# Required when FE.cacheHash.enforceValidation is enabled (TYPO3 v14 default).
+config.cacheHash {
+    excludedParameters {
+        prGoogleCseQuery = prGoogleCseQuery
+        prGoogleCseStartIndex = prGoogleCseStartIndex
+    }
+}
+
 plugin.tx_prgooglecse {
     view {
       templateRootPaths {
@@ -80,7 +88,15 @@ plugin.tx_prgooglecse {
     )
 }
 
-# Register USER_INT
+# Register USER_INT (content element CType, TYPO3 v14)
+tt_content.pr_googlecse.20 = USER_INT
+tt_content.pr_googlecse.20 {
+    userFunc = KronovaNet\PrGooglecse\SearchPlugin->render
+    showPagesInPagination = {$tt_content.pr_googlecse.20.showPagesInPagination}
+    resultsPerPage = {$tt_content.pr_googlecse.20.resultsPerPage}
+}
+
+# Legacy list-type path (pre-v14 migrated records)
 tt_content.list.20.pr_googlecse = USER_INT
 tt_content.list.20.pr_googlecse {
     userFunc = KronovaNet\PrGooglecse\SearchPlugin->render

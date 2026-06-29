@@ -12,79 +12,75 @@ declare(strict_types=1);
 namespace KronovaNet\PrGooglecse\Service;
 
 use KronovaNet\PrGooglecse\Configuration\ExtConf;
+use KronovaNet\PrGooglecse\Exception\SearchApiException;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Http\RequestFactory;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Site\Entity\Site;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
-/**
- * Class GoogleCseService
- */
 class GoogleCseService
 {
-    /**
-     * @var string
-     */
-    private $url = 'https://www.googleapis.com/customsearch/v1?q=%s&cx=%s&key=%s&start=%d';
+    private const string SEARCH_URL = 'https://www.googleapis.com/customsearch/v1?q=%s&cx=%s&key=%s&start=%d&num=%d';
 
-    /**
-     * @var ExtConf
-     */
-    protected $extConf;
-
-    /**
-     * GoogleCseService constructor.
-     */
-    public function __construct(ExtConf $extConf)
-    {
-        $this->extConf = $extConf;
+    public function __construct(
+        private readonly ExtConf $extConf,
+        private readonly RequestFactory $requestFactory,
+    ) {
     }
 
-    public function search(string $query, int $start, int $resultsPerPage): array
+    /**
+     * @return array<string, mixed>
+     */
+    public function search(string $query, int $start, int $resultsPerPage, ServerRequestInterface $request): array
     {
-        if($this->extConf->getFilterByCurrentLang()){
-            $this->addLanguageParameterToUrl();
-        }
-        $requestUrl = sprintf(
-            $this->getUrl(),
+        $this->extConf->assertConfigured();
+
+        $requestUrl = \sprintf(
+            self::SEARCH_URL,
             urlencode($query),
             urlencode($this->extConf->getGoogleCseKey()),
             urlencode($this->extConf->getGoogleApiKey()),
-            $start
+            $start,
+            $resultsPerPage,
         );
-        $requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
-        $response = $requestFactory->request($requestUrl);
-        if ($response->getStatusCode() === 200) {
-            return json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
-        } else {
-            throw new \HttpResponseException(
-                'Your search could not be completed. HTTP response code: ' . $response->getStatusCode()
-                . ', Response message: ' . $response->getBody()->getContents(),
-                1527430897
-            );
+
+        if ($this->extConf->getFilterByCurrentLang()) {
+            $requestUrl .= $this->buildLanguageParameter($request);
         }
+
+        $response = $this->requestFactory->request($requestUrl, 'GET', ['timeout' => 5]);
+
+        return $this->decodeResponse($response);
     }
-    private function getUrl(): string
+
+    private function buildLanguageParameter(ServerRequestInterface $request): string
     {
-        return $this->url;
-    } 
-    private function setUrl(string $url): void
-    {
-        $this->url = $url;
+        $language = $request->getAttribute('language');
+        if (!$language instanceof SiteLanguage) {
+            $site = $request->getAttribute('site');
+            if (!$site instanceof Site) {
+                return '';
+            }
+            $language = $site->getDefaultLanguage();
+        }
+
+        return '&lr=lang_' . substr($language->getLocale()->getLanguageCode(), 0, 2);
     }
-    private function getFrontendSelectedLanguage(): string
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function decodeResponse(ResponseInterface $response): array
     {
-        $context = GeneralUtility::makeInstance(Context::class);
-        /** @var TYPO3\CMS\Core\Site\Entity\Site */
-        $site = $GLOBALS['TYPO3_REQUEST']->getAttribute('site');
-        $langId = $context->getPropertyFromAspect('language', 'id');
-        /** @var TYPO3\CMS\Core\Site\Entity\SiteLanguage */
-        $language = $site->getLanguageById($langId);
-        $langCode = $language->getTwoLetterIsoCode();
-        $currentLanguage = 'lang_'.$langCode;
-        return '&lr='.$currentLanguage;
-    }
-    private function addLanguageParameterToUrl(): void
-    {
-        $this->setUrl($this->url.$this->getFrontendSelectedLanguage());
+        if ($response->getStatusCode() === 200) {
+            return json_decode($response->getBody()->getContents(), true, 512, \JSON_THROW_ON_ERROR);
+        }
+
+        throw new SearchApiException(
+            'Your search could not be completed. HTTP response code: ' . $response->getStatusCode()
+            . ', Response message: ' . $response->getBody()->getContents(),
+            1527430897,
+        );
     }
 }

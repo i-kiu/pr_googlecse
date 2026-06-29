@@ -1,0 +1,15 @@
+mod {
+  wizards.newContentElement.wizardItems.plugins {
+    elements {
+      pr_googlecse {
+        iconIdentifier = googlecse-extension-icon
+        title = LLL:EXT:pr_googlecse/Resources/Private/Language/locallang_db.xlf:plugin.title
+        description = LLL:EXT:pr_googlecse/Resources/Private/Language/locallang_db.xlf:plugin.description
+        tt_content_defValues {
+          CType = pr_googlecse
+        }
+      }
+    }
+    show = *
+  }
+}
