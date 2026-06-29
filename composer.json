@@ -1,5 +1,6 @@
 {
     "name": "kronova/pr-googlecse",
+    "version": "4.0.0",
     "type": "typo3-cms-extension",
     "description": "Frontend search plugin that uses the Google CSE api.",
     "license": "GPL-2.0-or-later",
@@ -15,7 +16,7 @@
     "support": {
       "email": "info@kronova.net",
       "issues": "https://kronova.net/contact.html",
-      "source": "https://github.com/pascal20997/pr_googlecse"
+      "source": "https://github.com/i-kiu/pr_googlecse"
     },
     "require": {
       "typo3/cms-core": "^14.1"
