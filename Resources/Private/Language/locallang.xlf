@@ -24,6 +24,9 @@
             <trans-unit id="tx_prgooglecse_search.forward">
                 <source>Next</source>
             </trans-unit>
+            <trans-unit id="tx_prgooglecse_search.pagination">
+                <source>Search results pagination</source>
+            </trans-unit>
             <trans-unit id="tx_prgooglecse_copyright">
                 <source>Powered by Google custom search engine and TYPO3 extension pr_googlecse.</source>
             </trans-unit>

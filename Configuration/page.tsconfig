@@ -6,8 +6,7 @@ mod {
         title = LLL:EXT:pr_googlecse/Resources/Private/Language/locallang_db.xlf:plugin.title
         description = LLL:EXT:pr_googlecse/Resources/Private/Language/locallang_db.xlf:plugin.description
         tt_content_defValues {
-          CType = list
-          list_type = pr_googlecse
+          CType = pr_googlecse
         }
       }
     }
