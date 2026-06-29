@@ -35,12 +35,12 @@ class SearchResultCountViewHelper extends AbstractViewHelper
         $startIndex = (int)$this->arguments['startIndex'];
 
         $totalPages = $totalResults / $resultsPerPage;
-        $currentPage = (int)round($startIndex / $resultsPerPage);
+        $currentPage = (int)floor(($startIndex - 1) / $resultsPerPage) + 1;
         $lastPage = $totalPages > $maxPagesToDisplay ? $maxPagesToDisplay : $totalPages;
         $page = $currentPage > ($totalPages * 0.6) ? (int)round($totalPages * 0.4) : 1;
         $pages = [];
         for ($page; $page <= $lastPage; ++$page) {
-            $pages[$page] = $resultsPerPage * $page;
+            $pages[$page] = ($page - 1) * $resultsPerPage + 1;
         }
 
         return $pages;

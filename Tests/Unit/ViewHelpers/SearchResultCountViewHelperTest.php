@@ -21,12 +21,11 @@ final class SearchResultCountViewHelperTest extends TestCase
             'totalResults' => 100,
             'resultsPerPage' => 10,
             'maxPagesToDisplay' => 5,
-            'startIndex' => 10,
+            'startIndex' => 1,
         ]);
 
         $pages = $viewHelper->render();
 
-        self::assertNotEmpty($pages);
-        self::assertSame(10, reset($pages));
+        self::assertSame([1 => 1, 2 => 11, 3 => 21, 4 => 31, 5 => 41], $pages);
     }
 }

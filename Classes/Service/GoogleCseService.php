@@ -15,9 +15,9 @@ use KronovaNet\PrGooglecse\Configuration\ExtConf;
 use KronovaNet\PrGooglecse\Exception\SearchApiException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\RequestFactory;
 use TYPO3\CMS\Core\Site\Entity\Site;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 
 class GoogleCseService
 {
@@ -26,7 +26,6 @@ class GoogleCseService
     public function __construct(
         private readonly ExtConf $extConf,
         private readonly RequestFactory $requestFactory,
-        private readonly Context $context,
     ) {
     }
 
@@ -57,13 +56,14 @@ class GoogleCseService
 
     private function buildLanguageParameter(ServerRequestInterface $request): string
     {
-        $site = $request->getAttribute('site');
-        if (!$site instanceof Site) {
-            return '';
+        $language = $request->getAttribute('language');
+        if (!$language instanceof SiteLanguage) {
+            $site = $request->getAttribute('site');
+            if (!$site instanceof Site) {
+                return '';
+            }
+            $language = $site->getDefaultLanguage();
         }
-
-        $langId = (int)$this->context->getPropertyFromAspect('language', 'id');
-        $language = $site->getLanguageById($langId);
 
         return '&lr=lang_' . substr($language->getLocale()->getLanguageCode(), 0, 2);
     }

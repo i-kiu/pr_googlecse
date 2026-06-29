@@ -49,9 +49,11 @@ class SearchPlugin
         $pageUid = (int)$request->getAttribute('frontend.page.information')?->getId();
         $pageType = (int)$this->getRequestParameter($request, 'type');
         $resultsPerPage = (int)($conf['resultsPerPage'] ?? 10);
-        $cacheIdentifier = md5($query . $start . $this->resolveLocale($request));
+        $shouldUseCache = $this->extConf->isEnableCache() && $query !== '';
+        $skipCacheForThisRequest = false;
+        $cacheIdentifier = $this->buildCacheIdentifier($query, $start, $resultsPerPage, $conf, $request);
 
-        if ($this->extConf->isEnableCache() && $this->cache->has($cacheIdentifier)) {
+        if ($shouldUseCache && $this->cache->has($cacheIdentifier)) {
             return (string)$this->cache->get($cacheIdentifier);
         }
 
@@ -72,7 +74,7 @@ class SearchPlugin
                 ]);
                 $content = $view->render('Search/Results');
             } catch (Exception $exception) {
-                $this->extConf->setEnableCache(false);
+                $skipCacheForThisRequest = true;
                 $this->logger->error('Exception during search!', ['exception' => $exception]);
                 $content = $view->render('Search/Error');
             }
@@ -80,7 +82,7 @@ class SearchPlugin
             $content = $view->render('Search/Form');
         }
 
-        if ($this->extConf->isEnableCache()) {
+        if ($shouldUseCache && !$skipCacheForThisRequest) {
             $this->cache->set($cacheIdentifier, $content, [], $this->extConf->getCacheLifetime());
         }
 
@@ -105,6 +107,25 @@ class SearchPlugin
         }
 
         return (string)($request->getQueryParams()[$name] ?? '');
+    }
+
+    /**
+     * @param array<string, mixed> $conf
+     */
+    private function buildCacheIdentifier(
+        string $query,
+        int $start,
+        int $resultsPerPage,
+        array $conf,
+        ServerRequestInterface $request,
+    ): string {
+        return md5(implode('|', [
+            $query,
+            (string)$start,
+            (string)$resultsPerPage,
+            $this->resolveLocale($request),
+            (string)(int)($conf['showPagesInPagination'] ?? false),
+        ]));
     }
 
     private function resolveLocale(ServerRequestInterface $request): string
