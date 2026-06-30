@@ -14,3 +14,10 @@ ExtensionManagementUtility::addPlugin(
     ],
     ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
 );
+
+// pr_googlecse has no plugin flexform; disable inherited tt_content.pi_flexform flex handling (TYPO3 v14).
+$GLOBALS['TCA']['tt_content']['types']['pr_googlecse']['columnsOverrides']['pi_flexform'] = [
+    'config' => [
+        'type' => 'passthrough',
+    ],
+];
